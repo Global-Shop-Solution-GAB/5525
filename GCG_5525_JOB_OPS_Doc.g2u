@@ -1,0 +1,312 @@
+Program.Sub.ScreenSU.Start
+Gui.frmDoc..Create
+Gui.frmDoc..Caption("Document Control")
+Gui.frmDoc..Size(5535,5910)
+Gui.frmDoc..MinX(0)
+Gui.frmDoc..MinY(0)
+Gui.frmDoc..Position(0,0)
+Gui.frmDoc..BackColor(-2147483633)
+Gui.frmDoc..MaxButton(False)
+Gui.frmDoc..MousePointer(0)
+Gui.frmDoc..Event(UnLoad,frmDoc_UnLoad)
+Gui.frmDoc.GsGrid.Create(GsGridControl)
+Gui.frmDoc.GsGrid.Size(5010,4995)
+Gui.frmDoc.GsGrid.Position(165,165)
+Gui.frmDoc.GsGrid.Event(RowCellClick,GsGrid_RowCellClick)
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+f.Intrinsic.Control.Try
+V.Local.sError.Declare
+
+V.Local.sfilname.Declare
+V.Local.sSql.Declare
+v.Local.iCnt.Declare
+v.Local.sRet.Declare
+v.Local.sTemp.Declare
+
+'Variable.Passed.009990
+'start job hook GUI or scanhook
+'f.Intrinsic.Control.If(v.Caller.Hook,=,15935,"or",v.Caller.Hook,=,15755)
+'Script1buton
+
+f.Intrinsic.Control.If(v.Caller.Hook,=,15710)
+'Entry Hook
+	Variable.Passed.000016.Set("Docs")
+	f.Intrinsic.Control.end
+f.Intrinsic.Control.elseIf(v.Caller.Hook,=,15760)
+
+	f.Intrinsic.UI.InvokeWaitDialog("Loading Documents.....")
+	F.ODBC.Connection!con.OpenCompanyConnection(300)
+	f.Intrinsic.String.Build("select DESCRIPTION from V_JOB_OPERATIONS where job='{0}' and LMO = 'C' and (DESCRIPTION like '%DW%' or DESCRIPTION like '%DC%' or DESCRIPTION like '%DP%' or DESCRIPTION like '%D-WI%' or DESCRIPTION like '%D-SOP%' or DESCRIPTION like '%D-FORM%') ",Variable.Passed.009990,V.Local.sSql)
+	'select * from "V_JOB_OPERATIONS" where LMO = 'C' and (DESCRIPTION like 'Part: DW%' or DESCRIPTION like 'Part: DC%' or DESCRIPTION like 'Part: DP%' or DESCRIPTION like 'Part: D-WI%' or DESCRIPTION like 'Part: D-SOP%' or DESCRIPTION like 'Part: D-FORM%')
+	f.Data.DataTable.CreateFromSQL("DTParent1","con",v.Local.sSql,true)
+	
+	f.Intrinsic.Control.For(v.Local.iCnt,0,v.DataTable.DTParent1.RowCount--,1)
+		f.Intrinsic.String.Split(v.DataTable.DTParent1(v.Local.iCnt).DESCRIPTION!FieldValTrim,"t: D",v.Local.sRet)
+		f.Intrinsic.String.Build("D{0}",v.Local.sRet(1),v.Local.sTemp)
+		f.Data.DataTable.SetValue("DTParent1",v.Local.iCnt,"DESCRIPTION",v.Local.sTemp)
+	f.Intrinsic.Control.Next(v.Local.iCnt)
+	
+	f.Intrinsic.Control.CallSub(LOAD_PART)
+'	F.ODBC.Connection!con.OpenRecordsetRO("rst",V.Local.sSql)
+'	F.Intrinsic.Control.If(V.ODBC.con!rst.EOF,=,False)	
+'		f.Intrinsic.Control.CallSub(LOAD_PART,"PART",v.ODBC.con!rst.FieldVal!Part)
+		gui.frmDoc..Caption(Variable.Passed.009990)
+'	F.Intrinsic.Control.EndIf
+'	F.ODBC.con!rst.Close
+	f.ODBC.Connection!con.Close
+	f.Intrinsic.UI.CloseWaitDialog 
+f.Intrinsic.Control.Endif
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.String.Build("Project: {0}{1}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}{1}{1}GAB Version: {5}",V.Ambient.ScriptPath,V.Ambient.Newline,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Ambient.GABVersion,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.End
+F.Intrinsic.Control.EndTry
+Program.Sub.Main.End
+
+Program.Sub.LOAD_PART.Start
+f.Intrinsic.Control.Try
+V.Local.sError.Declare
+
+V.Local.sFieldNames.Declare 
+V.Local.sTypes.Declare 
+V.Local.sFilePath.Declare 
+V.Local.sParams.Declare 
+V.Local.bExists.Declare 
+V.Local.sRet.Declare 
+V.Local.sFile.Declare 
+v.Local.ifor.Declare 
+V.Local.sRet1.Declare 
+V.Local.sFilter.Declare 
+V.Local.sfilname.Declare
+V.Local.sTitle.Declare
+
+
+'V.Local.sFieldNames.Set("Line*!*Seq*!*Part*!*Description*!*Cat*!*Source*!*Count1*!*OnHand*!*OnOrder*!*Required*!*Net*!*RtrNet*!*Parent*!*ldHrs*!*LdDate*!*filler*!*UM*!*GSS_EXTRA_DESC*!*ParentFLAG")
+'V.Local.sTypes.Set("String*!*String*!*String*!*String*!*String*!*String*!*String*!*String*!*String*!*String*!*String*!*String*!*String*!*String*!*String*!*String*!*String*!*String*!*String")
+''TOPPARENT
+
+'F.Intrinsic.String.Build("{0}\BOM{1}",V.System.Temp,V.Caller.Terminal,V.Local.sFilePath)
+''F.Intrinsic.String.Build("0{0}{1}{0}{2}",V.Ambient.Tab,V.Args.Parent,v.Local.sFilePath,V.Local.sParams)
+'F.Intrinsic.String.Build("0{0}{1}{0}{2}",V.Ambient.Tab,v.Args.PART,v.Local.sFilePath,V.Local.sParams)
+'F.Intrinsic.File.String2File(V.Local.sFilePath,V.Local.sParams)
+'F.Global.General.CallWrapperSync(410000,V.Local.sFilePath)
+
+'F.Intrinsic.File.Exists(V.Local.sFilePath,V.Local.bExists)
+'F.Intrinsic.Control.If(V.Local.bExists,=,False)
+'	f.Intrinsic.UI.Msgbox("Explode callwrapper Error")
+'	F.Intrinsic.Control.ExitSub
+'F.Intrinsic.Control.EndIf
+
+'F.Intrinsic.File.FiletoStringArray(V.Local.sFilePath,V.Ambient.Tab,V.Local.sRet)
+'V.Local.sRet.RedimPreserve(0,3)
+'F.Intrinsic.File.GetFileNameFromFQN(V.Local.sRet(3),V.Local.sFile.Trim)
+'F.Intrinsic.String.Split(V.Local.sFile," ",V.Local.sFile)
+'F.Intrinsic.String.Build("{0}\{1}",V.System.Temp,V.Local.sFile(0).Trim,V.Local.sFilePath)
+'F.Intrinsic.File.Exists(V.Local.sFilePath,V.Local.bExists)
+
+'F.Intrinsic.Control.If(V.Local.bExists,=,False)
+'	f.Intrinsic.UI.Msgbox("Explode callwrapper Error")
+'	F.Intrinsic.Control.ExitSub
+'F.Intrinsic.Control.EndIf
+
+''load it to a string
+'F.Intrinsic.File.File2String(V.Local.sFilePath,V.Local.sRet)
+''f.Intrinsic.String.Replace(v.Local.sRet,"*","",v.Local.sRet)
+
+'F.Intrinsic.Control.If(v.DataTable.DTTemp.Exists,=,True)
+'	F.Data.DataTable.Close("DTTemp")
+'Function.Intrinsic.Control.EndIf
+
+'F.Data.DataTable.CreateFromString("DTTemp",V.Local.sret,V.Local.sFieldNames,V.Local.sTypes,"|~|",v.ambient.newline,True)
+
+'Function.Data.DataTable.DeleteRow("DTTemp",v.dataTable.DTTemp.RowCount--)
+
+'f.Intrinsic.Control.For(v.Local.ifor,6,0,-1)
+'	Function.Data.DataTable.DeleteRow("DTTemp", v.Local.ifor)
+'f.Intrinsic.Control.Next(v.Local.ifor)
+
+'V.Local.sFilter.Set("part like 'DW%' or part like 'DC%' or part like 'DP%'")
+
+'f.Intrinsic.String.Build("{0}",V.Local.sFilter,V.Local.sFilter)
+
+'f.Data.DataView.Create("DTTemp","DVTemp",22,V.Local.sFilter,"")
+'Function.Data.DataView.ToDataTableDistinct("DTTemp","DVTemp","DTParent1","Part")
+
+f.Data.DataTable.Create("DTDOC",True)
+f.Data.DataTable.AddColumn("DTDOC","Lno","long")
+f.Data.DataTable.AddColumn("DTDOC","Part","string")
+f.Data.DataTable.AddColumn("DTDOC","Document","string")
+f.Data.DataTable.AddColumn("DTDOC","Filename","string")
+
+'open all attached docs
+f.Intrinsic.Control.For(v.Local.ifor,0,v.DataTable.DTParent1.RowCount--,1)
+	f.Intrinsic.Control.CallSub(OpenDoc,"Part",V.DataTable.DTParent1(v.Local.ifor).DESCRIPTION!fieldvaltrim)
+	
+	F.Intrinsic.Variable.ArgExists("DocRet",V.Local.bExists)
+	
+	F.Intrinsic.Control.If(V.Local.bExists)
+		f.Intrinsic.String.Split(v.Args.DocRet,"*!*",V.Local.sfilname)
+		f.Intrinsic.String.Build("{0}{1}",V.Local.sfilname(1),V.Local.sfilname(0),V.Local.sfilname)
+		V.Local.sTitle.Set(V.Local.sfilname(2))
+		Function.Data.DataTable.AddRowByMap("DTDOC","Part*!*Document*!*Filename",V.DataTable.DTParent1(v.Local.ifor).DESCRIPTION!fieldvaltrim,V.Local.sTitle,V.Local.sfilname)
+	F.Intrinsic.Control.EndIf
+f.Intrinsic.Control.Next(v.Local.ifor)
+
+f.Intrinsic.Control.If(v.DataTable.DTDOC.RowCount,>,0)
+'Show Grid
+	f.Intrinsic.Control.CallSub(Load_Grid)
+f.Intrinsic.Control.Else
+	f.Intrinsic.UI.Msgbox("No document attached")
+f.Intrinsic.Control.EndIf
+
+F.Data.DataTable.Close("DTParent1")
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.String.Build("Project: {0}{1}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}{1}{1}GAB Version: {5}",V.Ambient.ScriptPath,V.Ambient.Newline,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Ambient.GABVersion,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.End
+F.Intrinsic.Control.EndTry
+Program.Sub.LOAD_PART.End
+
+Program.Sub.OpenDoc.Start
+f.Intrinsic.Control.Try
+V.Local.sError.Declare
+v.Local.iLinkID.Declare
+V.Local.iPID.Declare
+V.Local.sfilname.Declare
+V.Local.bExist.Declare
+V.Local.sSQL.Declare
+
+'doc control parts
+F.Global.DocumentControl.GetLinkID(v.Args.Part,30,v.Local.iLinkID)
+
+f.Intrinsic.Control.If(v.Local.iLinkID,<>,-1)
+	F.Intrinsic.String.Concat("Select FILE_NUM from ATG_DOC_ASSOC Where LINK_ID='",V.Local.iLinkID,"'",V.Local.sSQL)
+	F.ODBC.Connection!con.OpenRecordsetRO("rstLFile",V.Local.sSQL)
+	F.Intrinsic.Control.if(V.ODBC.con!rstLFile.EOF,=,False)
+		F.Global.DocumentControl.GetDocument(V.ODBC.con!rstLFile.FieldVal!FILE_NUM,V.Local.sfilname)
+	F.Intrinsic.Control.Endif
+	F.ODBC.con!rstLFile.Close
+	
+	f.Intrinsic.Variable.AddRV("DocRet",V.Local.sfilname)
+
+''	F.Global.DocumentControl.GetDocument(v.Local.iLinkID,V.Local.sfilname)
+'	f.Intrinsic.String.Split(V.Local.sfilname,"*!*",V.Local.sfilname)
+'	f.Intrinsic.String.Build("{0}{1}",V.Local.sfilname(1),V.Local.sfilname(0),V.Local.sfilname)
+	
+	'V.Local.sfilname(0)  V.Local.sfilname(1)  V.Local.sfilname(2)
+'	slno filname title
+	
+'	f.Intrinsic.File.Exists(V.Local.sfilname,V.Local.bExist)
+'	f.Intrinsic.Control.If(V.Local.bExist)
+'		F.Intrinsic.Task.ShellExec(0,"",V.Local.sfilname,"","",1)
+'	f.Intrinsic.Control.endif
+f.Intrinsic.Control.endif
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.String.Build("Project: {0}{1}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}{1}{1}GAB Version: {5}",V.Ambient.ScriptPath,V.Ambient.Newline,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Ambient.GABVersion,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.End
+F.Intrinsic.Control.EndTry
+Program.Sub.OpenDoc.End
+
+Program.Sub.frmDoc_UnLoad.Start
+f.Intrinsic.Control.Try
+V.Local.sError.Declare
+
+
+F.Data.Dataview.Close("DTDOC","DVDoc")
+F.Data.DataTable.Close("DTDOC")
+
+f.Intrinsic.Control.End
+
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.String.Build("Project: {0}{1}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}{1}{1}GAB Version: {5}",V.Ambient.ScriptPath,V.Ambient.Newline,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Ambient.GABVersion,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.End
+F.Intrinsic.Control.EndTry
+Program.Sub.frmDoc_UnLoad.End
+
+Program.Sub.GsGrid_RowCellClick.Start
+f.Intrinsic.Control.Try
+V.Local.sError.Declare
+V.Local.iPID.Declare
+V.Local.sParts.Declare
+
+
+
+f.Intrinsic.Control.BlockEvents 
+f.Intrinsic.Control.If(V.Args.column,=,"Document")
+'	F.Global.DocumentControl.Invoke("DW PART",30,"Part document control...",V.Local.iPID)
+
+	gui.frmDoc.GsGrid.GetCellValueByColumnName("GridView","Part",V.Args.RowIndex,Variable.local.sParts)
+
+	F.Global.DocumentControl.Invoke(V.Local.sParts,30,"Part document control...",V.Local.iPID)
+Function.Intrinsic.Control.EndIf
+f.Intrinsic.Control.UnBlockEvents 
+
+F.Intrinsic.Control.Catch
+	f.Intrinsic.Control.UnBlockEvents 
+	F.Intrinsic.String.Build("Project: {0}{1}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}{1}{1}GAB Version: {5}",V.Ambient.ScriptPath,V.Ambient.Newline,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Ambient.GABVersion,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.End
+F.Intrinsic.Control.EndTry
+Program.Sub.GsGrid_RowCellClick.End
+
+Program.Sub.Load_Grid.Start
+f.Intrinsic.Control.Try
+V.Local.sError.Declare
+v.Local.i.Declare
+v.Local.stitle.Declare
+v.Local.iTotClmn.Declare
+
+
+F.Data.DataView.Create("DTDOC","DVDoc")
+gui.frmDoc.GsGrid.AddGridViewFromDataView("GridView","DTDOC","DVDoc")
+gui.frmDoc.GsGrid.GetColumnCount("GridView",v.Local.iTotClmn)
+f.Intrinsic.Math.Sub(v.Local.iTotClmn,1,v.Local.iTotClmn)
+f.Intrinsic.Control.For(v.Local.i,0,v.Local.iTotClmn,1)
+	gui.frmDoc.GsGrid.GetColumnNamebyIndex("GridView",v.Local.i,v.Local.stitle)
+	gui.frmDoc.GsGrid.SetColumnProperty("GridView",v.Local.stitle,"AllowEdit",False)
+	gui.frmDoc.GsGrid.SetColumnProperty("GridView",v.Local.stitle,"ReadOnly",True)
+
+	gui.frmDoc.GsGrid.SetColumnProperty("GridView",v.Local.stitle,"HeaderFontBold","True")
+	gui.frmDoc.GsGrid.SetColumnProperty("GridView",v.Local.stitle,"HeaderBackColor","#7FFF00")
+'	gui.frmDoc.GsGrid.SetColumnProperty("GridView",v.Local.stitle,"HeaderHAlignment","Center")
+
+'	gui.frmDoc.GsGrid.SetColumnProperty("GridView",v.Local.stitle,"HeaderWordWrap","wrap")
+f.Intrinsic.Control.Next(v.Local.i)
+
+	gui.frmDoc.GsGrid.SetColumnProperty("GridView","Document","CellFontUnderline",True)
+	gui.frmDoc.GsGrid.SetColumnProperty("GridView","Document","CellForeColor",V.Color.Blue)
+
+	gui.frmDoc.GsGrid.SetColumnProperty("GridView","Filename","MinWidth",200)
+	gui.frmDoc.GsGrid.SetColumnProperty("GridView","Filename","MaxWidth",200)
+	gui.frmDoc.GsGrid.SetColumnProperty("GridView","Part","MinWidth",50)
+	gui.frmDoc.GsGrid.SetColumnProperty("GridView","Part","MinWidth",50)
+	gui.frmDoc.GsGrid.SetColumnProperty("GridView","Document","MinWidth",100)
+	gui.frmDoc.GsGrid.SetColumnProperty("GridView","LNo","MinWidth",30)
+	gui.frmDoc.GsGrid.SetColumnProperty("GridView","LNo","MaxWidth",30)
+	F.Data.DataTable.SetSeries("DTDOC", "LNo", 1, 1)
+	
+	gui.frmDoc.GsGrid.SetColumnProperty("GridView", "Filename", "Visible", False)
+	
+	gui.frmDoc.GsGrid.SetGridviewProperty("GridView","OptionsSelectionEnableAppearanceFocusedRow",False)
+	
+	gui.frmDoc.GsGrid.MainView("GridView")
+	
+	gui.frmDoc..Show
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.String.Build("Project: {0}{1}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}{1}{1}GAB Version: {5}",V.Ambient.ScriptPath,V.Ambient.Newline,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Ambient.GABVersion,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.End
+F.Intrinsic.Control.EndTry
+Program.Sub.Load_Grid.End
